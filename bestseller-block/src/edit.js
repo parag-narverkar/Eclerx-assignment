@@ -10,8 +10,8 @@ const Edit = (props) => {
     const [loadingBooks, setLoadingBooks] = useState(false);
     const [sortOrder, setSortOrder] = useState("desc");
 
+    // Fetch categories on component mount
     useEffect(() => {
-        // Fetch categories
         fetch(
             "https://api.penguinrandomhouse.com/resources/v2/title/domains/PRH.UK/categories?rows=15&catSetId=PW&api_key=7fqge2qgxcdrwqbcgeywwdj2"
         )
@@ -29,6 +29,13 @@ const Edit = (props) => {
                 setLoadingCategories(false);
             });
     }, []);
+
+    // Fetch books whenever selected category or sort order changes
+    useEffect(() => {
+        if (attributes.selectedCategory) {
+            fetchBooks(attributes.selectedCategory, sortOrder);
+        }
+    }, [attributes.selectedCategory, sortOrder]);
 
     const fetchBooks = (catUri, sortOrder = "desc") => {
         setLoadingBooks(true);
@@ -62,12 +69,17 @@ const Edit = (props) => {
     const bookOptions = books.map((book) => ({
         label: book.title,
         value: book.workId,
-        coverUrl: book.coverUrls?.large?.coverUrl || "", // Extract the large coverUrl
     }));
 
     const selectedBook = books.find(
         (book) => book.workId === parseInt(attributes.selectedBook)
     );
+
+    const handleBookChange = (selectedBook) => {
+        const book = books.find((b) => b.workId === parseInt(selectedBook));
+        const coverUrl = book?.coverUrls?.large?.coverUrl || '';
+        setAttributes({ selectedBook, selectedBookCover: coverUrl });
+    };
 
     return (
         <>
@@ -79,10 +91,7 @@ const Edit = (props) => {
                         <SelectControl
                             label="Select a Genre"
                             value={attributes.selectedCategory || ""}
-                            options={[
-                                { label: "Select a category", value: "" },
-                                ...categoryOptions,
-                            ]}
+                            options={[{ label: "Select a category", value: "" }, ...categoryOptions]}
                             onChange={(selectedCategory) => {
                                 setAttributes({ selectedCategory });
                                 const selectedCatUri = categories.find(
@@ -100,13 +109,8 @@ const Edit = (props) => {
                         <SelectControl
                             label="Select a Book"
                             value={attributes.selectedBook || ""}
-                            options={[
-                                { label: "Select a book", value: "" },
-                                ...bookOptions,
-                            ]}
-                            onChange={(selectedBook) => {
-                                setAttributes({ selectedBook });
-                            }}
+                            options={[{ label: "Select a book", value: "" }, ...bookOptions]}
+                            onChange={handleBookChange}
                         />
                     ) : null}
                     <SelectControl
