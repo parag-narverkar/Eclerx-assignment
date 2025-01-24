@@ -162,26 +162,7 @@ const Edit = (props) => {
                         ) : (
                             <p>No Amazon link available</p>
                         )}
-                        <div className="additional-image">
-                            <MediaUploadCheck>
-                                <MediaUpload
-                                    onSelect={(media) => setAttributes({ additionalImage: media.url })}
-                                    allowedTypes={['image']}
-                                    render={({ open }) => (
-                                        <Button onClick={open} variant="secondary">
-                                            {attributes.additionalImage ? 'Change Additional Image' : 'Upload Additional Image'}
-                                        </Button>
-                                    )}
-                                />
-                            </MediaUploadCheck>
-                            {attributes.additionalImage && (
-                                <img
-                                    src={attributes.additionalImage}
-                                    alt="Additional uploaded image"
-                                    style={{ marginTop: '10px', maxWidth: '100%' }}
-                                />
-                            )}
-                        </div>
+                        
                     </div>
                 ) : (
                     <p>No book selected</p>

@@ -15,7 +15,10 @@
 		"start": "wp-scripts start --webpack-copy-php"
 	},
 	"devDependencies": {
-		"@wordpress/scripts": "^30.7.0"
+		"@wordpress/scripts": "^30.7.0",
+		"svgo": "^2.8.0", 
+		"svgo-loader": "^3.0.0", 
+		"file-loader": "^6.2.0"  
 	},
 	"dependencies": {
 		"@wordpress/api-fetch": "^7.14.0"

@@ -10,7 +10,6 @@ const Save = ({ attributes }) => {
         selectedBookAuthors,
         selectedBookAmazonLink,
         blockTitle,
-        additionalImage, // Include the new attribute
     } = attributes;
 
     return (
@@ -47,23 +46,17 @@ const Save = ({ attributes }) => {
                     ) : (
                         <p>No Amazon link available</p>
                     )}
-
-                    {/* Render the additional image */}
-                    {additionalImage && (
-                        <div className="additional-image">
-                            <img
-                                src={additionalImage}
-                                alt="Additional uploaded image"
-                                style={{ marginTop: '10px', maxWidth: '100%' }}
-                            />
-                        </div>
-                    )}
                 </div>
             ) : (
                 <p>No book selected</p>
             )}
-            <div className="svg-icon">
-                <MyIcon />
+
+            <div class="divider-container">
+                <div class="divider-line"></div>
+                    <div class="divider-icon">
+                        <MyIcon />
+                    </div>
+                <div class="divider-line"></div>
             </div>
         </div>
     );

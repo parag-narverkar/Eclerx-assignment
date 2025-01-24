@@ -32,10 +32,7 @@ function bestseller_block_assets() {
     // Enqueue frontend styles
     wp_enqueue_style(
         'bestseller-block-frontend',
-        plugins_url('build/style-index.css', __FILE__),
-        array(),
-        filemtime(plugin_dir_path(__FILE__) . 'build/style-index.css')
-    );
+        plugins_url('build/style-index.css', __FILE__),false, '1.0', 'all' );
 }
 add_action('enqueue_block_assets', 'bestseller_block_assets');
 

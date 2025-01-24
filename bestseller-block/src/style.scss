@@ -66,5 +66,25 @@
             }
         }
     }
+    .divider-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+
+        .divider-line {
+            width: 100px;
+            border-top: 2px solid #000;
+        }
+
+        .divider-icon {
+            margin: 0 20px;
+
+            svg {
+                height: auto;
+                width: 60px
+            }
+        }
+    }   
 }
 
