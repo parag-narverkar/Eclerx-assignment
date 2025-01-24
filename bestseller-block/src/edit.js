@@ -1,44 +1,48 @@
+import React from 'react';
 import { useState, useEffect } from '@wordpress/element';
-import { InspectorControls } from '@wordpress/block-editor';
+import { InspectorControls, RichText } from '@wordpress/block-editor';
 import { PanelBody, SelectControl } from '@wordpress/components';
+import './style.scss';
 
 const Edit = (props) => {
     const { attributes, setAttributes } = props;
-    const [categories, setCategories] = useState([]);
-    const [books, setBooks] = useState([]);
-    const [loadingCategories, setLoadingCategories] = useState(true);
-    const [loadingBooks, setLoadingBooks] = useState(false);
-    const [sortOrder, setSortOrder] = useState("desc");
 
-    // Fetch categories on component mount
+    const [state, setState] = useState({
+        categories: [],
+        books: [],
+        loadingCategories: true,
+        loadingBooks: false,
+    });
+
+    const updateState = (updates) => setState((prevState) => ({ ...prevState, ...updates }));
+
     useEffect(() => {
         fetch(
             "https://api.penguinrandomhouse.com/resources/v2/title/domains/PRH.UK/categories?rows=15&catSetId=PW&api_key=7fqge2qgxcdrwqbcgeywwdj2"
         )
             .then((response) => response.json())
             .then((result) => {
-                if (result.data && Array.isArray(result.data.categories)) {
-                    setCategories(result.data.categories);
+                if (result.data?.categories) {
+                    updateState({ categories: result.data.categories, loadingCategories: false });
                 } else {
                     console.error("Categories array not found in response.");
+                    updateState({ loadingCategories: false });
                 }
-                setLoadingCategories(false);
             })
             .catch((error) => {
                 console.error("Error fetching categories:", error);
-                setLoadingCategories(false);
+                updateState({ loadingCategories: false });
             });
     }, []);
 
-    // Fetch books whenever selected category or sort order changes
     useEffect(() => {
         if (attributes.selectedCategory) {
-            fetchBooks(attributes.selectedCategory, sortOrder);
+            fetchBooks(attributes.selectedCategory, attributes.sortOrder);
         }
-    }, [attributes.selectedCategory, sortOrder]);
+    }, [attributes.selectedCategory, attributes.sortOrder]);
 
     const fetchBooks = (catUri, sortOrder = "desc") => {
-        setLoadingBooks(true);
+        updateState({ loadingBooks: true });
         fetch(
             `https://api.penguinrandomhouse.com/resources/v2/title/domains/PRH.UK/works/views/uk-list-display?catUri=${encodeURIComponent(
                 catUri
@@ -46,46 +50,49 @@ const Edit = (props) => {
         )
             .then((response) => response.json())
             .then((result) => {
-                if (result.data && Array.isArray(result.data.works)) {
-                    setBooks(result.data.works);
+                if (result.data?.works) {
+                    updateState({ books: result.data.works, loadingBooks: false });
                 } else {
                     console.error("Books array not found in response.");
-                    setBooks([]);
+                    updateState({ books: [], loadingBooks: false });
                 }
-                setLoadingBooks(false);
             })
             .catch((error) => {
                 console.error("Error fetching books:", error);
-                setBooks([]);
-                setLoadingBooks(false);
+                updateState({ books: [], loadingBooks: false });
             });
     };
 
-    const categoryOptions = categories.map((item) => ({
+    const categoryOptions = state.categories.map((item) => ({
         label: item.menuText,
         value: item.catUri,
     }));
 
-    const bookOptions = books.map((book) => ({
+    const bookOptions = state.books.map((book) => ({
         label: book.title,
         value: book.workId,
     }));
 
-    const selectedBook = books.find(
-        (book) => book.workId === parseInt(attributes.selectedBook)
-    );
-
-    const handleBookChange = (selectedBook) => {
-        const book = books.find((b) => b.workId === parseInt(selectedBook));
+    const handleBookChange = (selectedBookId) => {
+        const book = state.books.find((b) => b.workId === parseInt(selectedBookId));
         const coverUrl = book?.coverUrls?.large?.coverUrl || '';
-        setAttributes({ selectedBook, selectedBookCover: coverUrl });
+        const amazonLink = book?.affiliateLinks?.find((link) => link.affiliateType === "amazon")?.url;
+        const authors = book?.authors?.map((author) => author.authorDisplay) || [];
+
+        setAttributes({
+            selectedBookId: book?.workId || '',
+            selectedBookTitle: book?.title || '',
+            selectedBookCover: coverUrl,
+            selectedBookAmazonLink: amazonLink || '',
+            selectedBookAuthors: authors,
+        });
     };
 
     return (
         <>
             <InspectorControls>
                 <PanelBody title="Category and Books Settings" initialOpen={true}>
-                    {loadingCategories ? (
+                    {state.loadingCategories ? (
                         <p>Loading categories...</p>
                     ) : (
                         <SelectControl
@@ -94,63 +101,87 @@ const Edit = (props) => {
                             options={[{ label: "Select a category", value: "" }, ...categoryOptions]}
                             onChange={(selectedCategory) => {
                                 setAttributes({ selectedCategory });
-                                const selectedCatUri = categories.find(
-                                    (cat) => cat.catUri === selectedCategory
-                                )?.catUri;
-                                if (selectedCatUri) {
-                                    fetchBooks(selectedCatUri, sortOrder);
-                                }
+                                fetchBooks(selectedCategory, attributes.sortOrder);
                             }}
                         />
                     )}
-                    {attributes.selectedCategory && loadingBooks ? (
+                    {attributes.selectedCategory && state.loadingBooks ? (
                         <p>Loading books...</p>
                     ) : attributes.selectedCategory ? (
                         <SelectControl
                             label="Select a Book"
-                            value={attributes.selectedBook || ""}
+                            value={attributes.selectedBookId || ""}
                             options={[{ label: "Select a book", value: "" }, ...bookOptions]}
                             onChange={handleBookChange}
                         />
                     ) : null}
                     <SelectControl
                         label="Sort Order"
-                        value={sortOrder}
+                        value={attributes.sortOrder}
                         options={[
                             { label: "Descending (Most Sales First)", value: "desc" },
                             { label: "Ascending (Least Sales First)", value: "asc" },
                         ]}
-                        onChange={(newSortOrder) => {
-                            setSortOrder(newSortOrder);
-                            if (attributes.selectedCategory) {
-                                fetchBooks(attributes.selectedCategory, newSortOrder);
-                            }
-                        }}
+                        onChange={(newSortOrder) => setAttributes({ sortOrder: newSortOrder })}
                     />
                 </PanelBody>
             </InspectorControls>
 
-            {/* Display selected genre and book in the editor */}
-            <div>
-                <h3>Selected Options</h3>
-                <p>
-                    <strong>Genre:</strong>{" "}
-                    {attributes.selectedCategory
-                        ? categories.find(
-                              (cat) => cat.catUri === attributes.selectedCategory
-                          )?.menuText || "Unknown"
-                        : "None"}
-                </p>
-                {selectedBook ? (
-                    <div>
-                        <p>
-                            <strong>Book:</strong> {selectedBook.title}
-                        </p>
+            <div className="bestsellers-container">
+                <RichText
+                    tagName="h2"
+                    className="bestsellers-title"
+                    value={attributes.blockTitle || 'Bestsellers'}
+                    onChange={(newTitle) => setAttributes({ blockTitle: newTitle })}
+                    placeholder="Enter block title..."
+                />
+                {attributes.selectedBookId ? (
+                    <div className="book-details">
                         <img
-                            src={selectedBook.coverUrls?.large?.coverUrl || ""}
-                            alt={selectedBook.title}
-                            style={{ maxWidth: "200px", height: "auto" }}
+                            src={attributes.selectedBookCover || ""}
+                            alt={attributes.selectedBookTitle}
                         />
+                        
+                        
+                        <p>{attributes.selectedBookTitle}</p>
+                        {attributes.selectedBookAuthors.length > 0 ? (
+                            <p>{attributes.selectedBookAuthors.join(", ")}</p>
+                        ) : (
+                            <p><strong>Author(s):</strong> Unknown</p>
+                        )}
+                        {attributes.selectedBookAmazonLink ? (
+                            <p className="amazon-button">
+                                <a
+                                    href={attributes.selectedBookAmazonLink}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    Buy from Amazon 
+                                </a>
+                            </p>
+                        ) : (
+                            <p>No Amazon link available</p>
+                        )}
+                        <div className="additional-image">
+                            <MediaUploadCheck>
+                                <MediaUpload
+                                    onSelect={(media) => setAttributes({ additionalImage: media.url })}
+                                    allowedTypes={['image']}
+                                    render={({ open }) => (
+                                        <Button onClick={open} variant="secondary">
+                                            {attributes.additionalImage ? 'Change Additional Image' : 'Upload Additional Image'}
+                                        </Button>
+                                    )}
+                                />
+                            </MediaUploadCheck>
+                            {attributes.additionalImage && (
+                                <img
+                                    src={attributes.additionalImage}
+                                    alt="Additional uploaded image"
+                                    style={{ marginTop: '10px', maxWidth: '100%' }}
+                                />
+                            )}
+                        </div>
                     </div>
                 ) : (
                     <p>No book selected</p>

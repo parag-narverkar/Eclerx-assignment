@@ -26,16 +26,3 @@ function create_block_bestseller_block_block_init() {
 	register_block_type( __DIR__ . '/build' );
 }
 add_action( 'init', 'create_block_bestseller_block_block_init' );
-
-function bestseller_block_assets() {
-
-    // Enqueue frontend styles
-    wp_enqueue_style(
-        'bestseller-block-frontend',
-        plugins_url('build/style-index.css', __FILE__),
-        array(),
-        filemtime(plugin_dir_path(__FILE__) . 'build/style-index.css')
-    );
-}
-add_action('enqueue_block_assets', 'bestseller_block_assets');
-
