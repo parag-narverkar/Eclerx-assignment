@@ -11,6 +11,16 @@
   "supports": {
     "html": false
   },
+  "attributes": {
+    "genre": {
+      "type": "string",
+      "default": ""
+    },
+    "subGenre": {
+      "type": "string",
+      "default": ""
+    }
+  },
   "textdomain": "bestseller-block",
   "editorScript": "file:./index.js",
   "editorStyle": "file:./index.css",
