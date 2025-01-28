@@ -66,7 +66,7 @@ const Edit = (props) => {
         const authors = book?.authors?.map((author) => author.authorDisplay) || [];
 
         setAttributes({
-            selectedBookId: book?.workId || '',
+            selectedBookId: selectedBook,
             selectedBookTitle: book?.title || '',
             selectedBookCover: coverUrl,
             selectedBookAmazonLink: amazonLink || '',
@@ -82,8 +82,9 @@ const Edit = (props) => {
 
     // Book options for the select control
     const bookOptions = state.books.map((book) => ({
-        label: book.title,
         value: book.workId,
+        label: book.title,
+        
     }));
 
     return (
